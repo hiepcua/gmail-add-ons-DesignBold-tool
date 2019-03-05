@@ -17,32 +17,28 @@
     ],
     "urlFetchWhitelist": [
         "https://designbold.com/",
-        "https://api.designbold.com/v3/user/me",
+        "https://api.designbold.com/v3/document",
         "https://beta.designbold.com/v3/authentication",
         "https://accounts-beta.designbold.com/v2/oauth/token",
-        "https://accounts.designbold.com/v2/",
-        "https://accounts.designbold.com/v2/oauth/token",
-        "https://accounts.designbold.com/v2/oauth/tokeninfo"
+        "https://www.designbold.com/design/view",
+        "https://www.designbold.com/design/edit"
     ],
     "gmail": {
         "name": "DesignBold Design Tool",
         "logoUrl": "https://i.ibb.co/RzcQ1HK/icon-128.png",
         "primaryColor": "#18b8a5",
         "secondaryColor": "#4285F4",
-        "authorizationCheckFunction": "get3PAuthorizationUrls",
         "contextualTriggers": [{
             "unconditional": {},
             "onTriggerFunction": "getContextualAddOn"
         }],
         "openLinkUrlPrefixes": [
-            "https://designbold.com/", 
-            "https://api.designbold.com/v3/user/me",
+            "https://designbold.com/",
+            "https://api.designbold.com/v3/document",
             "https://beta.designbold.com/v3/authentication",
-        	"https://accounts-beta.designbold.com/v2/oauth/token",
-            "https://www.designbold.com/collection/create-new/",
-            "https://accounts.designbold.com/v2/",
-            "https://accounts.designbold.com/v2/oauth/token",
-            "https://accounts.designbold.com/v2/oauth/tokeninfo"
+            "https://accounts-beta.designbold.com/v2/oauth/token",
+            "https://www.designbold.com/design/view",
+            "https://www.designbold.com/design/edit"
         ],
         "composeTrigger": {
             "selectActions": [{
@@ -50,6 +46,10 @@
                 "runFunction": "getInsertImageComposeUI"
             }],
             "draftAccess": "METADATA"
-        }
+        },
+        "universalActions": [{
+            "text": "Open DesignBold",
+            "openLink": "https://designbold.com/"
+        }]
     }
 }
