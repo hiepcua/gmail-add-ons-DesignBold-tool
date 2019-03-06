@@ -93,14 +93,11 @@ function buildImageComposeCard(accessToken) {
 }
 
 function getContextualAddOn(e) {
-    // console.log('getContextualAddOn');
     var accessToken = e.messageMetadata.accessToken;
     GmailApp.setCurrentMessageAccessToken(accessToken);
-
     // console.log(accessToken);
 
     var service = getOAuthService();
-    // console.log(service.hasAccess());
     if(service.hasAccess(e)){
         return showSidebar(e);
     }else{
@@ -109,7 +106,6 @@ function getContextualAddOn(e) {
 }
 
 function showSidebar(e){
-    // console.log("showSidebar");
     var accessToken = e.messageMetadata.accessToken;
     GmailApp.setCurrentMessageAccessToken(accessToken);
     // console.log('accessToken');
@@ -119,19 +115,26 @@ function showSidebar(e){
 
     var buttonSet = CardService.newButtonSet()
     .addButton(CardService.newTextButton().setText('Logout')
-        .setComposeAction(
-            CardService.newAction()
-            .setFunctionName('composeEmailCallback'),
-            // .setParameters({acToken: accessToken, threadId: threadId}), 
-            CardService.ComposedEmailType.REPLY_AS_DRAFT))
-        // .setOnClickAction(
-        //  CardService.newAction()
-        //  .setFunctionName('logout')
-        //  ))
-    .addButton(CardService.newTextButton().setText('Refresh add-on')
         .setOnClickAction(
             CardService.newAction()
-            .setFunctionName('showSidebar')));
+            .setFunctionName('logout')
+            ))
+
+    .addButton(CardService.newTextButton().setText('Refresh')
+        .setOnClickAction(
+            CardService.newAction()
+            .setFunctionName('showSidebar')))
+
+    .addButton(CardService.newTextButton().setText('Driver')
+        .setOnClickAction(
+            CardService.newAction()
+            .setFunctionName('saveDriver')))
+
+    .addButton(CardService.newTextButton().setText('Add img')
+        .setComposeAction(
+            CardService.newAction()
+            .setFunctionName('createComposeDraft'), 
+            CardService.ComposedEmailType.REPLY_AS_DRAFT));
 
     var section_intro = CardService.newCardSection()
     .addWidget(
@@ -169,7 +172,7 @@ function getListImage(){
             .setImageUrl(imageUrl)
             .setOnClickAction(
                 CardService.newAction()
-                .setFunctionName("openDesign")
+                .setFunctionName("designImgCallback")
                 .setParameters({design_url: edit_link})
                 )
             );
@@ -180,19 +183,40 @@ function getListImage(){
 
 function showOptionImage(){}
 
-function composeEmailCallback(e) {
+function designImgCallback(e) {
     // var accessToken = e.messageMetadata.accessToken;
     // GmailApp.setCurrentMessageAccessToken(accessToken);
 
-    var draft = GmailApp.getDrafts()[0];
-    var draftId = draft.getId();
-    var draftById = GmailApp.getDraft(draftId);
-    Logger.log(draft.getMessage().getSubject() == draftById.getMessage().getSubject());
+    // var composeActionResponse = CardService.newComposeActionResponseBuilder()
+    // .setGmailDraft(GmailApp.createDraft("recipient", "subject", "body"))
+    // .build();
+
+    // GmailApp.createDraft('mike@example.com', 'Attachment example', 'Please see attached file.', {
+    //     bcc: "tranviethiep69@gmail.com",
+    //     bcc: "tradaviahe2017@gmail.com",
+    //     name: 'Automatic Emailer Script'
+    // });
 
     // var draft = thread.createDraftReply('This is a reply');
     // return CardService.newComposeActionResponseBuilder()
     // .setGmailDraft(draft)
     // .build();
+
+    var action_compose = CardService.newAction().setFunctionName('composeEmailCallback');
+    CardService.newTextButton()
+        .setText('Compose Email')
+        .setComposeAction(action_compose, CardService.ComposedEmailType.REPLY_AS_DRAFT);
+}
+
+function composeEmailCallback(e) {
+    var accessToken = e.messageMetadata.accessToken;
+    GmailApp.setCurrentMessageAccessToken(accessToken);
+
+    var thread = GmailApp.getThreadById(e.threadId);
+    var draft = thread.createDraftReply('This is a reply');
+    return CardService.newComposeActionResponseBuilder()
+        .setGmailDraft(draft)
+        .build();
 }
 
 /* Open link to edit/design image */
@@ -205,17 +229,98 @@ function openDesign(e){
     return actionResponse.build();
 }
 
-/* Function check login. Access token not expires */
-function isLogin(){
-    var flag = false;
-    var acToken = getAccessTokenUserProperties();
-    /* Kiểm tra xem access token đã hết hạn/ hợp lệ chưa. */
-    if( acToken ){
-        flag = true;
-    }
+function createComposeDraft(e) {
+    var url = e.parameters.url;
+    var accessToken = e.messageMetadata.accessToken;
+    GmailApp.setCurrentMessageAccessToken(accessToken);
 
-    return flag;
+    var draftCompose = GmailApp.createDraft("", "", "",{
+        htmlBody: "<img src='https://cloud.designbold.com/document/27/A8/Yl/eE/ma/2/1/preview.jpg'/>",
+    });
+
+    return CardService.newComposeActionResponseBuilder()
+        .setGmailDraft(draftCompose).build();
 }
+
+function saveDriver(e){
+    var currentTime = new Date();
+    var year = currentTime.getFullYear();
+    var month = currentTime.getMonth() + 1;
+    var day = currentTime.getDate();
+
+    // If folder not exists then create folder DesignBold
+    if(!checkFolderExists('DesignBold')){
+        DriveApp.createFolder('DesignBold');
+        var par_id = getFolderIdByParent(0, 'DesignBold');
+        var f_year_id = createFolder(par_id, year); 
+        var f_month_id = createFolder(f_year_id, month);
+    }else{
+        var par_id = getFolderIdByParent(0, 'DesignBold');
+        var f_year_id = createFolder(par_id, year);
+        var f_month_id = createFolder(f_year_id, month);
+    }
+}
+/*
+return
+    true : File exists
+    false : File not exists
+*/
+function checkFolderExists(name){
+    var list_folder = DriveApp.getFolders();
+    var exists = false;
+    while(list_folder.hasNext()){
+        var folder = list_folder.next();
+
+        if(folder.getName() === name){
+            exists = true;
+        }
+    }
+    return exists;
+}
+
+/* Return folder id with name equal folderName */
+function getFolderIdByParent(parent_id, folderName){
+    var id = '';
+    if(parent_id == 0){
+        var folders = DriveApp.getFolders();
+        while (folders.hasNext()) {
+            var folder = folders.next();
+            if(folder.getName() == folderName)
+            {
+                id = folder.getId();
+            }
+        }
+    }else{
+        var parentFolder = DriveApp.getFolderById(parent_id);
+        var folders = parentFolder.getFolders();
+        while (folders.hasNext()) {
+            var folder = folders.next();
+            if(folder.getName() == folderName)
+            {
+                id = folder.getId();
+            }
+        }
+    }
+    
+    return id;
+}
+
+/* Create a folder only if that folder name does not exists in the Parent folder  */
+function createFolder(folderId, folderName){
+    var parentFolder = DriveApp.getFolderById(folderId);
+    var newFolder = '';
+    // Check if folder already exists.
+    var child_id = getFolderIdByParent(folderId, folderName);
+
+    if(child_id == ''){
+        newFolder = parentFolder.createFolder(folderName);
+        return newFolder.getId();
+    }else{
+        return child_id;
+    }
+}
+
+/*------------------------------------------------------------------------------------------------*/
 
 function accessProtectedResource(url, method_opt, headers_opt) {
     // console.log('accessProtectedResource');
