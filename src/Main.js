@@ -1,69 +1,11 @@
-/*-----------------------------------------------------------------------------------------------*/
+var g_start = 0;
+var count_one_page = 6;
 
-/* Get access token in user properties store */
-function getAccessTokenUserProperties(){
-    var userProperties = PropertiesService.getUserProperties();
-    var acToken = userProperties.getProperty('accessToken');
-
-    if(acToken === 'null'){
-        return false;
-    }else{
-        return acToken;
-    }
-}
-
-/* Set access token in user properties store */
-function setAccessTokenUserProperties(accessToken){
-    var userProperties = PropertiesService.getUserProperties();
-    userProperties.setProperty('accessToken', accessToken);
-}
-
-/* Check access token in user properties store, expires or not */
-function checkAccessTokenExpires(accessToken){
-}
-
-/* Get refresh token in user properties store */
-function getRefreshTokenUserProperties(){
-    var userProperties = PropertiesService.getUserProperties();
-    var refreshToken = userProperties.getProperty('refreshToken');
-
-    if(refreshToken === 'null'){
-        return false;
-    }else{
-        return refreshToken;
-    }
-}
-
-/* Get refresh token from server by access token */
-function getRefreshTokenByAccessToken(){
-    var userProperties = PropertiesService.getUserProperties();
-    var refreshToken = userProperties.getProperty('refreshToken');
-
-    if(refreshToken === 'null'){
-        return false;
-    }else{
-        return refreshToken;
-    }
-}
-
-/* Set refresh token in user properties store */
-function setRefreshTokenUserProperties(refreshToken){
-    var userProperties = PropertiesService.getUserProperties();
-    userProperties.setProperty('refreshToken', refreshToken);
-}
-
-/* Check refresh token in user properties store */
-function checkRefreshToken(){}
-
-/* Refresh access token */
-function refreshToken5Time(){}
-
-/*-----------------------------------------------------------------------------------------------*/
 function getInsertImageComposeUI(e) {
     return [buildImageComposeCard()];
 }
 
-function buildImageComposeCard(accessToken) {
+function buildImageComposeCard(e) {
     // console.log(buildImageComposeCard);
     var service = getOAuthService();
     if(service.hasAccess()){
@@ -95,7 +37,7 @@ function buildImageComposeCard(accessToken) {
 function getContextualAddOn(e) {
     var accessToken = e.messageMetadata.accessToken;
     GmailApp.setCurrentMessageAccessToken(accessToken);
-    // console.log(accessToken);
+    setCurrentPageOnlyFirstTime();
 
     var service = getOAuthService();
     if(service.hasAccess(e)){
@@ -108,16 +50,26 @@ function getContextualAddOn(e) {
 function showSidebar(e){
     var accessToken = e.messageMetadata.accessToken;
     GmailApp.setCurrentMessageAccessToken(accessToken);
-    // console.log('accessToken');
 
     var card = CardService.newCardBuilder();
     var cardHeader = CardService.newCardHeader();
+
+    var html = HtmlService.createTemplateFromFile('index').evaluate().getContent();
+
+    var loadMore = CardService.newCardSection()
+    .addWidget(
+        CardService.newTextButton().setText('Load more')
+        .setOnClickAction(
+            CardService.newAction()
+            .setFunctionName('handleLoadMoreClick')
+            )
+        );
 
     var buttonSet = CardService.newButtonSet()
     .addButton(CardService.newTextButton().setText('Logout')
         .setOnClickAction(
             CardService.newAction()
-            .setFunctionName('logout')
+            .setFunctionName('handleSignOutClick')
             ))
 
     .addButton(CardService.newTextButton().setText('Refresh')
@@ -133,7 +85,7 @@ function showSidebar(e){
     .addButton(CardService.newTextButton().setText('Add img')
         .setComposeAction(
             CardService.newAction()
-            .setFunctionName('createComposeDraft'), 
+            .setFunctionName('insertImgToCompose'), 
             CardService.ComposedEmailType.REPLY_AS_DRAFT));
 
     var section_intro = CardService.newCardSection()
@@ -143,84 +95,64 @@ function showSidebar(e){
         )
     .addWidget(buttonSet);
 
+    var section_html = CardService.newCardSection()
+    .addWidget(CardService.newKeyValue().setContent(html));
+
     return card.setHeader(cardHeader)
     .addSection(section_intro)
+    .addSection(section_html)
     .addSection(getListImage())
+    .addSection(loadMore)
     .build();
 }
 
-function getData(){
+function getData(start, end){
+    var st = parseInt(start);
+    var ed = parseInt(end);
     var accessToken = getOAuthService().getAccessToken();
     var headers_opt = {
         "Authorization": "Bearer " + accessToken
     }
-    return accessProtectedResource("https://api.designbold.com/v3/document?owner=me&sort=modified&start=0&limit=15&target=my-design&loc=wp&folder_id=", "GET", headers_opt);
+    return accessProtectedResource("https://api.designbold.com/v3/document?owner=me&sort=modified&start="+st+"&limit="+ed+"&target=my-design&loc=wp&folder_id=", "GET", headers_opt);
 }
 
 function getListImage(){
-    var jsonData = JSON.parse(getData());
+    var g_end = getCurrentPage() * count_one_page;
+    var jsonData = JSON.parse(getData(g_start, g_end));
     var list = jsonData.response;
     var cardSection = CardService.newCardSection();
     var i=0;
+
     for (var item in list) {
         var imageUrl = list[item].thumb;
         var edit_link = list[item].edit_link;
         if(imageUrl === '') imageUrl = 'https://cdn.designbold.com/web/dbcream/main/images/empty_design.jpg';
         cardSection
         .addWidget(
-            CardService.newImage()
-            .setImageUrl(imageUrl)
-            .setOnClickAction(
-                CardService.newAction()
-                .setFunctionName("designImgCallback")
-                .setParameters({design_url: edit_link})
-                )
-            );
+            CardService.newImage().setImageUrl(imageUrl)
+            )
+        .addWidget(
+            CardService.newButtonSet()
+            .addButton(CardService.newTextButton().setText('Sử dụng ảnh')
+                .setComposeAction(
+                    CardService.newAction()
+                    .setFunctionName('insertImgToCompose')
+                    .setParameters({url : imageUrl}),
+                    CardService.ComposedEmailType.REPLY_AS_DRAFT))
+
+            .addButton(CardService.newTextButton().setText('Sửa ảnh')
+                .setOnClickAction(
+                    CardService.newAction()
+                    .setFunctionName('openLinkEditDesign')
+                    .setParameters({design_url: edit_link})
+                    )));
     }
 
     return cardSection;
 }
 
-function showOptionImage(){}
-
-function designImgCallback(e) {
-    // var accessToken = e.messageMetadata.accessToken;
-    // GmailApp.setCurrentMessageAccessToken(accessToken);
-
-    // var composeActionResponse = CardService.newComposeActionResponseBuilder()
-    // .setGmailDraft(GmailApp.createDraft("recipient", "subject", "body"))
-    // .build();
-
-    // GmailApp.createDraft('mike@example.com', 'Attachment example', 'Please see attached file.', {
-    //     bcc: "tranviethiep69@gmail.com",
-    //     bcc: "tradaviahe2017@gmail.com",
-    //     name: 'Automatic Emailer Script'
-    // });
-
-    // var draft = thread.createDraftReply('This is a reply');
-    // return CardService.newComposeActionResponseBuilder()
-    // .setGmailDraft(draft)
-    // .build();
-
-    var action_compose = CardService.newAction().setFunctionName('composeEmailCallback');
-    CardService.newTextButton()
-        .setText('Compose Email')
-        .setComposeAction(action_compose, CardService.ComposedEmailType.REPLY_AS_DRAFT);
-}
-
-function composeEmailCallback(e) {
-    var accessToken = e.messageMetadata.accessToken;
-    GmailApp.setCurrentMessageAccessToken(accessToken);
-
-    var thread = GmailApp.getThreadById(e.threadId);
-    var draft = thread.createDraftReply('This is a reply');
-    return CardService.newComposeActionResponseBuilder()
-        .setGmailDraft(draft)
-        .build();
-}
-
 /* Open link to edit/design image */
-function openDesign(e){
+function openLinkEditDesign(e){
     var actionResponse = CardService.newActionResponseBuilder()
     .setOpenLink(CardService.newOpenLink()
         .setUrl(e.parameters.design_url)
@@ -229,20 +161,54 @@ function openDesign(e){
     return actionResponse.build();
 }
 
-function createComposeDraft(e) {
+function insertImgToCompose(e) {
     var url = e.parameters.url;
     var accessToken = e.messageMetadata.accessToken;
     GmailApp.setCurrentMessageAccessToken(accessToken);
 
+    var driver_image_url = saveDriver(url);
+
     var draftCompose = GmailApp.createDraft("", "", "",{
-        htmlBody: "<img src='https://cloud.designbold.com/document/27/A8/Yl/eE/ma/2/1/preview.jpg'/>",
+        htmlBody: "<img src='"+driver_image_url+"'/>"
     });
 
     return CardService.newComposeActionResponseBuilder()
-        .setGmailDraft(draftCompose).build();
+    .setGmailDraft(draftCompose).build();
 }
 
-function saveDriver(e){
+function getCurrentPage(){
+    var userProperties = PropertiesService.getUserProperties();
+    return userProperties.getProperty('currentPage');
+}
+
+function setCurrentPage(cur_page){
+    var userProperties = PropertiesService.getUserProperties();
+    userProperties.setProperties({currentPage: cur_page}, true);
+}
+
+function deleteCurrenPage(){
+    var userProperties = PropertiesService.getUserProperties();
+    userProperties.deleteProperty('currentPage');
+}
+
+function setCurrentPageOnlyFirstTime(){
+    var userProperties = PropertiesService.getUserProperties();
+    var currentPage = getCurrentPage();
+
+    if(typeof(currentPage) == "undefined" || currentPage == null){
+        userProperties.setProperties({currentPage: 1}, true);
+    }
+}
+
+function handleLoadMoreClick(e){
+    var currentPage = getCurrentPage();
+    currentPage = parseInt(currentPage) + 1;
+    setCurrentPage(currentPage);
+    return showSidebar(e);
+}
+
+// Save image to driver, return image url in driver
+function saveDriver(url){
     var currentTime = new Date();
     var year = currentTime.getFullYear();
     var month = currentTime.getMonth() + 1;
@@ -250,21 +216,30 @@ function saveDriver(e){
 
     // If folder not exists then create folder DesignBold
     if(!checkFolderExists('DesignBold')){
-        DriveApp.createFolder('DesignBold');
-        var par_id = getFolderIdByParent(0, 'DesignBold');
+        var folder = DriveApp.createFolder('DesignBold');
+        folder.setSharing(DriveApp.Access.ANYONE, DriveApp.Permission.EDIT);
+        
+        var par_id = getFolderIdByName(0, 'DesignBold');
         var f_year_id = createFolder(par_id, year); 
         var f_month_id = createFolder(f_year_id, month);
+
+        var response = UrlFetchApp.fetch(url);
+        var urlImg = db_createFile(f_month_id, response);
+
+        return 'https://drive.google.com/uc?id='+urlImg;
     }else{
-        var par_id = getFolderIdByParent(0, 'DesignBold');
+        var par_id = getFolderIdByName(0, 'DesignBold');
         var f_year_id = createFolder(par_id, year);
         var f_month_id = createFolder(f_year_id, month);
+
+        var response = UrlFetchApp.fetch(url);
+        var urlImg = db_createFile(f_month_id, response);
+
+        return 'https://drive.google.com/uc?id='+urlImg;
     }
 }
-/*
-return
-    true : File exists
-    false : File not exists
-*/
+
+/* return true : File exists || false : File not exists */
 function checkFolderExists(name){
     var list_folder = DriveApp.getFolders();
     var exists = false;
@@ -279,7 +254,7 @@ function checkFolderExists(name){
 }
 
 /* Return folder id with name equal folderName */
-function getFolderIdByParent(parent_id, folderName){
+function getFolderIdByName(parent_id, folderName){
     var id = '';
     if(parent_id == 0){
         var folders = DriveApp.getFolders();
@@ -301,7 +276,7 @@ function getFolderIdByParent(parent_id, folderName){
             }
         }
     }
-    
+
     return id;
 }
 
@@ -310,7 +285,7 @@ function createFolder(folderId, folderName){
     var parentFolder = DriveApp.getFolderById(folderId);
     var newFolder = '';
     // Check if folder already exists.
-    var child_id = getFolderIdByParent(folderId, folderName);
+    var child_id = getFolderIdByName(folderId, folderName);
 
     if(child_id == ''){
         newFolder = parentFolder.createFolder(folderName);
@@ -318,6 +293,13 @@ function createFolder(folderId, folderName){
     }else{
         return child_id;
     }
+}
+
+/* Create a file in folder that have id equal folderId */
+function db_createFile(folderId, fileData){
+    var folder = DriveApp.getFolderById(folderId);
+    var newFile = folder.createFile(fileData);
+    return newFile.getId();
 }
 
 /*------------------------------------------------------------------------------------------------*/
@@ -383,15 +365,14 @@ function authCallback(callbackRequest) {
     }
 }
 
-function logout() {
-    // console.log('logout');
-    var service = getOAuthService()
+function handleSignOutClick() {
+    deleteCurrenPage();
+    var service = getOAuthService();
     service.reset();
-    getContextualAddOn();
+    return create3PAuthorizationUi();
 }
 
 function create3PAuthorizationUi() {
-    // console.log("create3PAuthorizationUi");
     var service = getOAuthService();
     var authUrl = service.getAuthorizationUrl();
     var authButton = CardService.newTextButton()
@@ -414,43 +395,4 @@ function create3PAuthorizationUi() {
             .addButton(authButton)))
     .build();
     return card;
-}
-
-function get3PAuthorizationUrls() {
-    // var service = getOAuthService();
-    // if(!service.hasAccess()) return create3PAuthorizationUi();
-    //    var acToken = service.getAccessToken();
-    //
-    //    var rfToken = getRefreshTokenUserProperties();
-    //    // Tạm thời
-    //    // var dfAccessToken = "b0f99ceb3d596cb8e7152088548c41e981920c0bd92312047fd8e75b9eee440d";
-    //    // var accessToken = "Z4nYOLdED50Q2WvwG6ly4eJqjb91rkypXB83zagP";
-    //    // var refreshToken = "2bv0O7ADlj4WkR38mxLB8MdnpP6KozwrVygZNEBq";
-    //    var headers_opt = {
-    //        "Authorization": "Bearer Z4nYOLdED50Q2WvwG6ly4eJqjb91rkypXB83zagP"
-    //    }
-    //
-    //    if( acToken !== null ){
-    //        // Đã đăng nhập rồi, cần kiểm tra xem cái token đó đã hết hạn chưa, đã đúng định dạng chưa
-    //        var status_acToken = checkAccessTokenExpires(acToken);
-    //        // Nếu hết hạn thực hiện refresh 5 lần.
-    //        if( status_acToken === 204 ){
-    //            // refresh token 5 times
-    //            var status_rfToken = refreshToken5Time(rfToken);
-    //            if( status_rfToken === 200 ){
-    //                /* refresh token success. Save new access token.Do something with new access token */
-    //            }else{ /* 406 || 500 */
-    //                /* refresh token false. Do something */
-    //            }
-    //        }else{
-    //            // Nếu access token vẫn còn hạn. Do something.
-    //            // .....
-    //        }
-    //    }else{
-    //        return create3PAuthorizationUi();
-    //    }
-
-    // accessProtectedResource("https://api.designbold.com/v3/user/me", "GET");
-    // accessProtectedResource("https://api.service2.com/probe");
-    // accessProtectedResource("https://api.service3.com/check_logged_in");
 }
