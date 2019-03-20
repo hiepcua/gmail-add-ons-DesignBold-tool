@@ -6,7 +6,6 @@ function getInsertImageComposeUI(e) {
 }
 
 function buildImageComposeCard(e) {
-    // console.log(buildImageComposeCard);
     var service = getOAuthService();
     if(service.hasAccess()){
         var card = CardService.newCardBuilder();
