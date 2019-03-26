@@ -2,107 +2,101 @@ var g_start = 0;
 var count_one_page = 6;
 
 function getInsertImageComposeUI(e) {
-    return [buildImageComposeCard()];
+    return [buildImageComposeCard(e)];
 }
 
 function buildImageComposeCard(e) {
     var service = getOAuthService();
     if(service.hasAccess()){
         var card = CardService.newCardBuilder();
-        var action = CardService.newAction().setFunctionName('openLoginWindow');
-        var cardSection = CardService.newCardSection();
-        cardSection.addWidget(CardService.newImage()
-            .setImageUrl("https://ci5.googleusercontent.com/proxy/0bUHItshL0ecZvuWGz1KRhaHPiZtelj-j4pn3QJuRUqTz1gkmSLFIv4kA4wNv5MrgBUqXaoNO2GBjfKiTAvkjRSKPEw3UMOOEiiqSCs18sKH0eUP7dav5yyZjKVPzQhW4wxwnB0FlkRC")
-            .setAltText("DesignBold")
-            );
-    }else{
-        var card = CardService.newCardBuilder();
-        var action = CardService.newAction().setFunctionName('openLoginWindow');
-        var cardSection = CardService.newCardSection();
-        cardSection.addWidget(CardService.newImage()
-            .setImageUrl("https://ci5.googleusercontent.com/proxy/0bUHItshL0ecZvuWGz1KRhaHPiZtelj-j4pn3QJuRUqTz1gkmSLFIv4kA4wNv5MrgBUqXaoNO2GBjfKiTAvkjRSKPEw3UMOOEiiqSCs18sKH0eUP7dav5yyZjKVPzQhW4wxwnB0FlkRC")
-            .setAltText("DesignBold")
+        var cardHeader = CardService.newCardHeader();
+
+        var loadMore = CardService.newCardSection()
+        .addWidget(
+            CardService.newTextButton().setText('Load more')
+            .setOnClickAction(
+                CardService.newAction()
+                .setFunctionName('handleLoadMoreClick')
+                )
             );
 
-        cardSection.addWidget(CardService.newImage()
-            .setImageUrl("https://ci6.googleusercontent.com/proxy/sZVfTGhXetRx5FCy27CJw0jLx3qgH9lzO7EuLbFBpRYx3SyFJNjy-jxkaUSkEbKe9EDWviHBHB0uCGGe_TD1AxLB_NPIeEsIfmWK6A6ia34b79cdniY_l0QBP8KRnc5jGF9UNt5UZQ")
-            .setAltText("DesignBold")
-            .setOnClickAction(action)
-            );
-    }
-    return card.addSection(cardSection).build();
-}
+        var buttonSet = CardService.newButtonSet()
+        .addButton(CardService.newTextButton().setText('Logout')
+            .setOnClickAction(
+                CardService.newAction()
+                .setFunctionName('handleSignOutClick')
+                ))
 
-function getContextualAddOn(e) {
-    var accessToken = e.messageMetadata.accessToken;
-    GmailApp.setCurrentMessageAccessToken(accessToken);
-    setCurrentPageOnlyFirstTime();
+        .addButton(CardService.newTextButton().setText('Refresh')
+            .setOnClickAction(
+                CardService.newAction()
+                .setFunctionName('getContextualAddOn')));
 
-    var service = getOAuthService();
-    if(service.hasAccess(e)){
-        return showSidebar(e);
+        var section_intro = CardService.newCardSection()
+        .addWidget(
+            CardService.newTextParagraph()
+            .setText('<b class="db_title">Your design with DesignBold</b>')
+            )
+        .addWidget(buttonSet);
+
+        return card.setHeader(cardHeader)
+        .addSection(section_intro)
+        .addSection(getListImage2())
+        .addSection(loadMore)
+        .build();
     }else{
         return create3PAuthorizationUi();
     }
 }
 
-function showSidebar(e){
-    var accessToken = e.messageMetadata.accessToken;
-    GmailApp.setCurrentMessageAccessToken(accessToken);
+function getContextualAddOn(e) {
+    var service = getOAuthService();
+    if(service.hasAccess()){
+        var card = CardService.newCardBuilder();
+        var cardHeader = CardService.newCardHeader();
 
-    var card = CardService.newCardBuilder();
-    var cardHeader = CardService.newCardHeader();
+        var loadMore = CardService.newCardSection()
+        .addWidget(
+            CardService.newTextButton().setText('Load more')
+            .setOnClickAction(
+                CardService.newAction()
+                .setFunctionName('handleLoadMoreClick')
+                )
+            );
 
-    var html = HtmlService.createTemplateFromFile('index').evaluate().getContent();
-
-    var loadMore = CardService.newCardSection()
-    .addWidget(
-        CardService.newTextButton().setText('Load more')
-        .setOnClickAction(
-            CardService.newAction()
-            .setFunctionName('handleLoadMoreClick')
-            )
-        );
-
-    var buttonSet = CardService.newButtonSet()
-    .addButton(CardService.newTextButton().setText('Logout')
-        .setOnClickAction(
-            CardService.newAction()
-            .setFunctionName('handleSignOutClick')
-            ))
-
-    .addButton(CardService.newTextButton().setText('Refresh')
-        .setOnClickAction(
-            CardService.newAction()
-            .setFunctionName('showSidebar')))
-
-    .addButton(CardService.newTextButton().setText('Driver')
-        .setOnClickAction(
-            CardService.newAction()
-            .setFunctionName('saveDriver')))
-
-    .addButton(CardService.newTextButton().setText('Add img')
+        var buttonSet = CardService.newButtonSet()
+        .addButton(CardService.newTextButton().setText('Add data')
         .setComposeAction(
             CardService.newAction()
-            .setFunctionName('insertImgToCompose'), 
-            CardService.ComposedEmailType.REPLY_AS_DRAFT));
+            .setFunctionName('insertImgToCurrentComposeBeingOpen'), 
+            CardService.ComposedEmailType.STANDALONE_DRAFT))
 
-    var section_intro = CardService.newCardSection()
-    .addWidget(
-        CardService.newTextParagraph()
-        .setText('<b class="db_title">Your design with DesignBold</b>')
-        )
-    .addWidget(buttonSet);
+        .addButton(CardService.newTextButton().setText('Logout')
+            .setOnClickAction(
+                CardService.newAction()
+                .setFunctionName('handleSignOutClick')
+                ))
 
-    var section_html = CardService.newCardSection()
-    .addWidget(CardService.newKeyValue().setContent(html));
+        .addButton(CardService.newTextButton().setText('Refresh')
+            .setOnClickAction(
+                CardService.newAction()
+                .setFunctionName('getContextualAddOn')));
 
-    return card.setHeader(cardHeader)
-    .addSection(section_intro)
-    .addSection(section_html)
-    .addSection(getListImage())
-    .addSection(loadMore)
-    .build();
+        var section_intro = CardService.newCardSection()
+        .addWidget(
+            CardService.newTextParagraph()
+            .setText('<b class="db_title">Your design with DesignBold</b>')
+            )
+        .addWidget(buttonSet);
+
+        return card.setHeader(cardHeader)
+        .addSection(section_intro)
+        .addSection(getListImage())
+        .addSection(loadMore)
+        .build();   
+    }else{
+        return create3PAuthorizationUi();
+    }
 }
 
 function getData(start, end){
@@ -132,14 +126,48 @@ function getListImage(){
             )
         .addWidget(
             CardService.newButtonSet()
-            .addButton(CardService.newTextButton().setText('Sử dụng ảnh')
+            .addButton(CardService.newTextButton().setText('Use image')
                 .setComposeAction(
                     CardService.newAction()
-                    .setFunctionName('insertImgToCompose')
+                    .setFunctionName('insertImgToNewCompose')
                     .setParameters({url : imageUrl}),
-                    CardService.ComposedEmailType.REPLY_AS_DRAFT))
+                    CardService.ComposedEmailType.STANDALONE_DRAFT))
 
-            .addButton(CardService.newTextButton().setText('Sửa ảnh')
+            .addButton(CardService.newTextButton().setText('Edit image')
+                .setOnClickAction(
+                    CardService.newAction()
+                    .setFunctionName('openLinkEditDesign')
+                    .setParameters({design_url: edit_link})
+                    )));
+    }
+
+    return cardSection;
+}
+
+function getListImage2(){
+    var g_end = getCurrentPage() * count_one_page;
+    var jsonData = JSON.parse(getData(g_start, g_end));
+    var list = jsonData.response;
+    var cardSection = CardService.newCardSection();
+    var i=0;
+
+    for (var item in list) {
+        var imageUrl = list[item].thumb;
+        var edit_link = list[item].edit_link;
+        if(imageUrl === '') imageUrl = 'https://cdn.designbold.com/web/dbcream/main/images/empty_design.jpg';
+        cardSection
+        .addWidget(
+            CardService.newImage().setImageUrl(imageUrl)
+            )
+        .addWidget(
+            CardService.newButtonSet()
+            .addButton(CardService.newTextButton().setText('Use image')
+                .setOnClickAction(
+                    CardService.newAction()
+                    .setFunctionName('insertImgToCurrentComposeBeingOpen')
+                    .setParameters({url : imageUrl})))
+
+            .addButton(CardService.newTextButton().setText('Edit image')
                 .setOnClickAction(
                     CardService.newAction()
                     .setFunctionName('openLinkEditDesign')
@@ -160,7 +188,19 @@ function openLinkEditDesign(e){
     return actionResponse.build();
 }
 
-function insertImgToCompose(e) {
+function insertImgToCurrentComposeBeingOpen(e) {
+    var url = e.parameters.url;
+    var driver_image_url = saveDriver(url);
+    var imageHtmlContent = "<img src='"+driver_image_url+"'>";
+    var response = CardService.newUpdateDraftActionResponseBuilder()
+    .setUpdateDraftBodyAction(CardService.newUpdateDraftBodyAction()
+        .addUpdateContent(imageHtmlContent, CardService.ContentType.MUTABLE_HTML)
+        .setUpdateType(CardService.UpdateDraftBodyType.IN_PLACE_INSERT))
+    .build();
+    return response;
+}
+
+function insertImgToNewCompose(e) {
     var url = e.parameters.url;
     var accessToken = e.messageMetadata.accessToken;
     GmailApp.setCurrentMessageAccessToken(accessToken);
@@ -203,7 +243,7 @@ function handleLoadMoreClick(e){
     var currentPage = getCurrentPage();
     currentPage = parseInt(currentPage) + 1;
     setCurrentPage(currentPage);
-    return showSidebar(e);
+    return getContextualAddOn(e);
 }
 
 // Save image to driver, return image url in driver
@@ -304,7 +344,6 @@ function db_createFile(folderId, fileData){
 /*------------------------------------------------------------------------------------------------*/
 
 function accessProtectedResource(url, method_opt, headers_opt) {
-    // console.log('accessProtectedResource');
     var service = getOAuthService();
     var maybeAuthorized = service.hasAccess();
     if (maybeAuthorized) {
@@ -394,4 +433,8 @@ function create3PAuthorizationUi() {
             .addButton(authButton)))
     .build();
     return card;
+}
+
+function get3PAuthorizationUrls(){
+    setCurrentPageOnlyFirstTime();
 }

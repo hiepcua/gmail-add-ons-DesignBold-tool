@@ -25,13 +25,17 @@
         "https://www.designbold.com/design/view",
         "https://www.designbold.com/design/edit",
         "https://www.googleapis.com/upload/gmail/v1/users/me/drafts",
-        "https://cloud.designbold.com/document"
+        "https://cloud.designbold.com/document",
+        "https://download.designbold.com/",
+        "https://cloud.designbold.com/resize/",
+        "https://cdn.designbold.com/web/dbcream/main/images"
     ],
     "gmail": {
         "name": "DesignBold Design Tool",
         "logoUrl": "https://i.ibb.co/RzcQ1HK/icon-128.png",
         "primaryColor": "#18b8a5",
         "secondaryColor": "#4285F4",
+        "authorizationCheckFunction": "get3PAuthorizationUrls",
         "contextualTriggers": [{
             "unconditional": {},
             "onTriggerFunction": "getContextualAddOn"
