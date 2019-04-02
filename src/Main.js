@@ -1,103 +1,6 @@
 var g_start = 0;
 var count_one_page = 6;
 
-function getInsertImageComposeUI(e) {
-    return [buildImageComposeCard(e)];
-}
-
-function buildImageComposeCard(e) {
-    var service = getOAuthService();
-    if(service.hasAccess()){
-        var card = CardService.newCardBuilder();
-        var cardHeader = CardService.newCardHeader();
-
-        var loadMore = CardService.newCardSection()
-        .addWidget(
-            CardService.newTextButton().setText('Load more')
-            .setOnClickAction(
-                CardService.newAction()
-                .setFunctionName('handleLoadMoreClick')
-                )
-            );
-
-        var buttonSet = CardService.newButtonSet()
-        .addButton(CardService.newTextButton().setText('Logout')
-            .setOnClickAction(
-                CardService.newAction()
-                .setFunctionName('handleSignOutClick')
-                ))
-
-        .addButton(CardService.newTextButton().setText('Refresh')
-            .setOnClickAction(
-                CardService.newAction()
-                .setFunctionName('getContextualAddOn')));
-
-        var section_intro = CardService.newCardSection()
-        .addWidget(
-            CardService.newTextParagraph()
-            .setText('<b class="db_title">Your design with DesignBold</b>')
-            )
-        .addWidget(buttonSet);
-
-        return card.setHeader(cardHeader)
-        .addSection(section_intro)
-        .addSection(getListImage2())
-        .addSection(loadMore)
-        .build();
-    }else{
-        return create3PAuthorizationUi();
-    }
-}
-
-function getContextualAddOn(e) {
-    var service = getOAuthService();
-    if(service.hasAccess()){
-        var card = CardService.newCardBuilder();
-        var cardHeader = CardService.newCardHeader();
-
-        var loadMore = CardService.newCardSection()
-        .addWidget(
-            CardService.newTextButton().setText('Load more')
-            .setOnClickAction(
-                CardService.newAction()
-                .setFunctionName('handleLoadMoreClick')
-                )
-            );
-
-        var buttonSet = CardService.newButtonSet()
-        .addButton(CardService.newTextButton().setText('Add data')
-        .setComposeAction(
-            CardService.newAction()
-            .setFunctionName('insertImgToCurrentComposeBeingOpen'), 
-            CardService.ComposedEmailType.STANDALONE_DRAFT))
-
-        .addButton(CardService.newTextButton().setText('Logout')
-            .setOnClickAction(
-                CardService.newAction()
-                .setFunctionName('handleSignOutClick')
-                ))
-
-        .addButton(CardService.newTextButton().setText('Refresh')
-            .setOnClickAction(
-                CardService.newAction()
-                .setFunctionName('getContextualAddOn')));
-
-        var section_intro = CardService.newCardSection()
-        .addWidget(
-            CardService.newTextParagraph()
-            .setText('<b class="db_title">Your design with DesignBold</b>')
-            )
-        .addWidget(buttonSet);
-
-        return card.setHeader(cardHeader)
-        .addSection(section_intro)
-        .addSection(getListImage())
-        .addSection(loadMore)
-        .build();   
-    }else{
-        return create3PAuthorizationUi();
-    }
-}
 
 function getData(start, end){
     var st = parseInt(start);
@@ -109,75 +12,6 @@ function getData(start, end){
     return accessProtectedResource("https://api.designbold.com/v3/document?owner=me&sort=modified&start="+st+"&limit="+ed+"&target=my-design&loc=wp&folder_id=", "GET", headers_opt);
 }
 
-function getListImage(){
-    var g_end = getCurrentPage() * count_one_page;
-    var jsonData = JSON.parse(getData(g_start, g_end));
-    var list = jsonData.response;
-    var cardSection = CardService.newCardSection();
-    var i=0;
-
-    for (var item in list) {
-        var imageUrl = list[item].thumb;
-        var edit_link = list[item].edit_link;
-        if(imageUrl === '') imageUrl = 'https://cdn.designbold.com/web/dbcream/main/images/empty_design.jpg';
-        cardSection
-        .addWidget(
-            CardService.newImage().setImageUrl(imageUrl)
-            )
-        .addWidget(
-            CardService.newButtonSet()
-            .addButton(CardService.newTextButton().setText('Use image')
-                .setComposeAction(
-                    CardService.newAction()
-                    .setFunctionName('insertImgToNewCompose')
-                    .setParameters({url : imageUrl}),
-                    CardService.ComposedEmailType.STANDALONE_DRAFT))
-
-            .addButton(CardService.newTextButton().setText('Edit image')
-                .setOnClickAction(
-                    CardService.newAction()
-                    .setFunctionName('openLinkEditDesign')
-                    .setParameters({design_url: edit_link})
-                    )));
-    }
-
-    return cardSection;
-}
-
-function getListImage2(){
-    var g_end = getCurrentPage() * count_one_page;
-    var jsonData = JSON.parse(getData(g_start, g_end));
-    var list = jsonData.response;
-    var cardSection = CardService.newCardSection();
-    var i=0;
-
-    for (var item in list) {
-        var imageUrl = list[item].thumb;
-        var edit_link = list[item].edit_link;
-        if(imageUrl === '') imageUrl = 'https://cdn.designbold.com/web/dbcream/main/images/empty_design.jpg';
-        cardSection
-        .addWidget(
-            CardService.newImage().setImageUrl(imageUrl)
-            )
-        .addWidget(
-            CardService.newButtonSet()
-            .addButton(CardService.newTextButton().setText('Use image')
-                .setOnClickAction(
-                    CardService.newAction()
-                    .setFunctionName('insertImgToCurrentComposeBeingOpen')
-                    .setParameters({url : imageUrl})))
-
-            .addButton(CardService.newTextButton().setText('Edit image')
-                .setOnClickAction(
-                    CardService.newAction()
-                    .setFunctionName('openLinkEditDesign')
-                    .setParameters({design_url: edit_link})
-                    )));
-    }
-
-    return cardSection;
-}
-
 /* Open link to edit/design image */
 function openLinkEditDesign(e){
     var actionResponse = CardService.newActionResponseBuilder()
@@ -186,33 +20,6 @@ function openLinkEditDesign(e){
         .setOpenAs(CardService.OpenAs.FULL_SIZE)
         .setOnClose(CardService.OnClose.NOTHING));
     return actionResponse.build();
-}
-
-function insertImgToCurrentComposeBeingOpen(e) {
-    var url = e.parameters.url;
-    var driver_image_url = saveDriver(url);
-    var imageHtmlContent = "<img src='"+driver_image_url+"'>";
-    var response = CardService.newUpdateDraftActionResponseBuilder()
-    .setUpdateDraftBodyAction(CardService.newUpdateDraftBodyAction()
-        .addUpdateContent(imageHtmlContent, CardService.ContentType.MUTABLE_HTML)
-        .setUpdateType(CardService.UpdateDraftBodyType.IN_PLACE_INSERT))
-    .build();
-    return response;
-}
-
-function insertImgToNewCompose(e) {
-    var url = e.parameters.url;
-    var accessToken = e.messageMetadata.accessToken;
-    GmailApp.setCurrentMessageAccessToken(accessToken);
-
-    var driver_image_url = saveDriver(url);
-
-    var draftCompose = GmailApp.createDraft("", "", "",{
-        htmlBody: "<img src='"+driver_image_url+"'/>"
-    });
-
-    return CardService.newComposeActionResponseBuilder()
-    .setGmailDraft(draftCompose).build();
 }
 
 function getCurrentPage(){
@@ -237,13 +44,6 @@ function setCurrentPageOnlyFirstTime(){
     if(typeof(currentPage) == "undefined" || currentPage == null){
         userProperties.setProperties({currentPage: 1}, true);
     }
-}
-
-function handleLoadMoreClick(e){
-    var currentPage = getCurrentPage();
-    currentPage = parseInt(currentPage) + 1;
-    setCurrentPage(currentPage);
-    return getContextualAddOn(e);
 }
 
 // Save image to driver, return image url in driver
@@ -341,11 +141,57 @@ function db_createFile(folderId, fileData){
     return newFile.getId();
 }
 
+/* Get image info */
+function db_api_download_info(accessToken, params){
+    var id = params.id;
+    var url = "https://api.designbold.com/v3/document/"+id+"/download-info";
+    var headers_opt = {
+        "Authorization": "Bearer " + accessToken
+    }
+
+    return accessProtectedResource(url, "GET", headers_opt);
+}
+
+/* Check image if free or not */
+function db_api_checkout(accessToken, params){
+    var url = "https://api.designbold.com/v3/document/"+params.id+"/checkout?type=png&pages=all&version="+params.version;
+    var headers_opt = {
+        "Authorization": "Bearer " + accessToken
+    }
+
+    return accessProtectedResource(url, "GET", headers_opt);
+}
+
+/* Return image url designed */
+function db_api_render(accessToken, params, successRender){
+    var d = new Date();
+    var n = d.getMilliseconds();
+    var name = params.id + n;
+    var url = "https://api.designbold.com/v3/document/"+params.id+"/render?name="+name+"&type=png&crop_bleed=0&quality=high&pages=picked&mode=download&wm=0&session=&beta=0&picked=%5B1%5D&pk=324a31810611bc5e5e162371a585d3d2";
+    var headers_opt = {
+        "Authorization": "Bearer " + accessToken
+    }
+
+    accessProtectedResource(url, "GET", headers_opt,function(result){
+        result = JSON.parse(result);
+        var downloadUrl = ("response" in result && "downloadUrl" in result.response) ? result.response.downloadUrl : 'undefined';
+
+        if(downloadUrl == 'undefined'){
+            db_api_render(accessToken, params, successRender);
+        }else{
+            successRender(downloadUrl);
+        }
+    }, function(result){
+        console.log(result);
+    })
+}
+
 /*------------------------------------------------------------------------------------------------*/
 
-function accessProtectedResource(url, method_opt, headers_opt) {
+function accessProtectedResource(url, method_opt, headers_opt, successCallback, errorCallback) {
     var service = getOAuthService();
     var maybeAuthorized = service.hasAccess();
+
     if (maybeAuthorized) {
         var accessToken = service.getAccessToken();
         var method = method_opt || 'get';
@@ -360,18 +206,25 @@ function accessProtectedResource(url, method_opt, headers_opt) {
 
         var code = resp.getResponseCode();
         if (code >= 200 && code < 300) {
+            if(typeof successCallback == 'function'){
+                successCallback(resp.getContentText("utf-8"));
+            }
             return resp.getContentText("utf-8"); // Success
         } else if (code == 401 || code == 403) {
             // Not fully authorized for this action.
+            if(typeof errorCallback == 'function'){
+                errorCallback(resp.getContentText("utf-8"));
+            }
             maybeAuthorized = false;
         } else {
             console.error("Backend server error (%s): %s", code.toString(),
                 resp.getContentText("utf-8"));
+            if(typeof errorCallback == 'function'){
+                errorCallback(resp.getContentText("utf-8"));
+            }
             throw ("Backend server error: " + code);
         }
-    }
-
-    if (!maybeAuthorized) {
+    }else{
         CardService.newAuthorizationException()
         .setAuthorizationUrl(service.getAuthorizationUrl())
         .setResourceDisplayName("Display name to show to the user")
