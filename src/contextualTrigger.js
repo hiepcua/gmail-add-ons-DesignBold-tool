@@ -85,37 +85,34 @@ function insertImgToNewCompose(e) {
         "version" : e.parameters.version,
     };
     
-    var url = e.parameters.url;
     var accessToken = e.messageMetadata.accessToken;
     GmailApp.setCurrentMessageAccessToken(accessToken);
-    /* -------------------------------- */
-    
+
     var checkout_info = JSON.parse(db_api_checkout(accessToken, params));
     if(parseInt(checkout_info.response.total) == 0){
-    	var userProperties = PropertiesService.getUserProperties();
-    	userProperties.setProperties({renderStatus: 0});
+        var userProperties = PropertiesService.getUserProperties();
+        userProperties.setProperties({renderStatus: 0});
 
         db_api_render(accessToken, params, function(downloadUrl){
-            userProperties.setProperties({renderStatus: 1});
             userProperties.setProperties({downloadUrl: downloadUrl});
         });
-
+        
         while(true){
-        	if(userProperties.getProperty('renderStatus') == 1){
-        		var downloadUrl = userProperties.getProperty('downloadUrl');
-        		var driver_image_url = saveDriver(downloadUrl);
-	            var draftCompose = GmailApp.createDraft("", "", "",{
-	                htmlBody: "<img src='"+driver_image_url+"'/>"
-	            });
-	            break;
-        	}
+            if(userProperties.getProperty('renderStatus') == 2){
+                var downloadUrl = userProperties.getProperty('downloadUrl');
+                var driver_image_url = saveDriver(downloadUrl);
+                var draftCompose = GmailApp.createDraft("", "", "",{
+                    htmlBody: "<img src='"+driver_image_url+"'/>"
+                });
+                break;
+            }
         }
 
         return CardService.newComposeActionResponseBuilder()
         .setGmailDraft(draftCompose).build();
 
     }else{
-    	console.log('ảnh trả phí');
+        console.log('ảnh trả phí');
         /* ảnh trả phí */
         // var driver_image_url = saveDriver(url);
         

@@ -55,7 +55,10 @@ function getListImage2(){
 
     for (var item in list) {
         var imageUrl = list[item].thumb;
+        var imageId = list[item]._id;
         var edit_link = list[item].edit_link;
+        var version = list[item].version;
+
         if(imageUrl === '') imageUrl = 'https://cdn.designbold.com/web/dbcream/main/images/empty_design.jpg';
         cardSection
         .addWidget(
@@ -67,7 +70,7 @@ function getListImage2(){
                 .setOnClickAction(
                     CardService.newAction()
                     .setFunctionName('insertImgToCurrentComposeBeingOpen')
-                    .setParameters({url : imageUrl})))
+                    .setParameters({url : imageUrl, id : imageId, version : version})))
 
             .addButton(CardService.newTextButton().setText('Edit image')
                 .setOnClickAction(
@@ -81,15 +84,47 @@ function getListImage2(){
 }
 
 function insertImgToCurrentComposeBeingOpen(e) {
-    var url = e.parameters.url;
-    var driver_image_url = saveDriver(url);
-    var imageHtmlContent = "<img src='"+driver_image_url+"'>";
-    var response = CardService.newUpdateDraftActionResponseBuilder()
-    .setUpdateDraftBodyAction(CardService.newUpdateDraftBodyAction()
-        .addUpdateContent(imageHtmlContent, CardService.ContentType.MUTABLE_HTML)
-        .setUpdateType(CardService.UpdateDraftBodyType.IN_PLACE_INSERT))
-    .build();
-    return response;
+    var params = {
+        "id" : e.parameters.id,
+        "version" : e.parameters.version,
+    };
+    var accessToken = getOAuthService().getAccessToken();
+    var checkout_info = JSON.parse(db_api_checkout(accessToken, params));
+    if(parseInt(checkout_info.response.total) == 0){
+
+        /* Set render status = 0. Chưa render */
+        var userProperties = PropertiesService.getUserProperties();
+        userProperties.setProperties({renderStatus: 0});
+
+        db_api_render(accessToken, params, function(downloadUrl){
+            userProperties.setProperties({downloadUrl: downloadUrl});
+        });
+
+        while(true){
+            if(userProperties.getProperty('renderStatus') == 2){
+                var downloadUrl = userProperties.getProperty('downloadUrl');
+                var driver_image_url = saveDriver(downloadUrl);
+                var imageHtmlContent = "<img src='"+driver_image_url+"'>";
+                var response = CardService.newUpdateDraftActionResponseBuilder()
+                .setUpdateDraftBodyAction(CardService.newUpdateDraftBodyAction()
+                    .addUpdateContent(imageHtmlContent, CardService.ContentType.MUTABLE_HTML)
+                    .setUpdateType(CardService.UpdateDraftBodyType.IN_PLACE_INSERT));
+                break;
+            }
+        }
+        return response.build();
+    }else{
+        console.log('ảnh trả phí');
+        /* ảnh trả phí */
+        // var driver_image_url = saveDriver(url);
+        
+        // var draftCompose = GmailApp.createDraft("", "", "",{
+        //     htmlBody: "<img src='"+driver_image_url+"'/>"
+        // });
+
+        // return CardService.newComposeActionResponseBuilder()
+        // .setGmailDraft(draftCompose).build();
+    }
 }
 
 function handleLoadMoreClick2(e){

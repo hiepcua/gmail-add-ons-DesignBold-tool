@@ -172,16 +172,27 @@ function db_api_render(accessToken, params, successRender){
         "Authorization": "Bearer " + accessToken
     }
 
-    accessProtectedResource(url, "GET", headers_opt,function(result){
+    accessProtectedResource(url, "GET", headers_opt, function(result){
         result = JSON.parse(result);
+
+        /* Set render status = 1. Đang render */
+        var userProperties = PropertiesService.getUserProperties();
+        userProperties.setProperties({renderStatus: 1});
+
         var downloadUrl = ("response" in result && "downloadUrl" in result.response) ? result.response.downloadUrl : 'undefined';
 
         if(downloadUrl == 'undefined'){
+            /* Set render status = 3. Render thành công nhưng có lỗi */
+            userProperties.setProperties({renderStatus: 3});
             db_api_render(accessToken, params, successRender);
         }else{
+            /* Set render status = 3. Render thành công */
+            userProperties.setProperties({renderStatus: 2});
             successRender(downloadUrl);
         }
     }, function(result){
+        /* Set render status = 3. Render thành công nhưng có lỗi */
+        userProperties.setProperties({renderStatus: 3});
         console.log(result);
     })
 }
