@@ -7,6 +7,9 @@ function buildImageComposeCard(e) {
     if(service.hasAccess()){
         var card = CardService.newCardBuilder();
         var cardHeader = CardService.newCardHeader();
+        var updatePro_url = 'https://www.designbold.com/pricing';
+        var accessToken = service.getAccessToken();
+        var userInfo = JSON.parse(db_api_get_info_user(accessToken));
 
         var loadMore = CardService.newCardSection()
         .addWidget(
@@ -27,12 +30,19 @@ function buildImageComposeCard(e) {
         .addButton(CardService.newTextButton().setText('Refresh')
             .setOnClickAction(
                 CardService.newAction()
-                .setFunctionName('buildImageComposeCard')));
+                .setFunctionName('buildImageComposeCard')))
+
+        .addButton(CardService.newTextButton().setText('Update to pro')
+            .setTextButtonStyle(CardService.TextButtonStyle.FILLED)
+            .setOnClickAction(
+                CardService.newAction()
+                .setFunctionName('openLinkUpdatePro')
+                .setParameters({updatePro_url: updatePro_url})));
 
         var section_intro = CardService.newCardSection()
         .addWidget(
             CardService.newTextParagraph()
-            .setText('<b class="db_title">Your design with DesignBold</b>')
+            .setText('<b>'+userInfo.response.user.username+'</b><br>---------------------')
             )
         .addWidget(buttonSet);
 
@@ -115,15 +125,11 @@ function insertImgToCurrentComposeBeingOpen(e) {
         return response.build();
     }else{
         console.log('ảnh trả phí');
-        /* ảnh trả phí */
-        // var driver_image_url = saveDriver(url);
-        
-        // var draftCompose = GmailApp.createDraft("", "", "",{
-        //     htmlBody: "<img src='"+driver_image_url+"'/>"
-        // });
-
-        // return CardService.newComposeActionResponseBuilder()
-        // .setGmailDraft(draftCompose).build();
+        // var imageHtmlContent = "Ảnh phải trả phí";
+        // var response = CardService.newUpdateDraftActionResponseBuilder()
+        // .setUpdateDraftBodyAction(CardService.newUpdateDraftBodyAction()
+        //     .addUpdateContent(imageHtmlContent, CardService.ContentType.MUTABLE_HTML)
+        //     .setUpdateType(CardService.UpdateDraftBodyType.IN_PLACE_INSERT));
     }
 }
 

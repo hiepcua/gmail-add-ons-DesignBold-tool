@@ -3,6 +3,9 @@ function getContextualAddOn(e) {
     if(service.hasAccess()){
         var card = CardService.newCardBuilder();
         var cardHeader = CardService.newCardHeader();
+        var updatePro_url = 'https://www.designbold.com/pricing';
+        var accessToken = service.getAccessToken();
+        var userInfo = JSON.parse(db_api_get_info_user(accessToken));
 
         var loadMore = CardService.newCardSection()
         .addWidget(
@@ -23,12 +26,19 @@ function getContextualAddOn(e) {
         .addButton(CardService.newTextButton().setText('Refresh')
             .setOnClickAction(
                 CardService.newAction()
-                .setFunctionName('getContextualAddOn')));
+                .setFunctionName('getContextualAddOn')))
+
+        .addButton(CardService.newTextButton().setText('Update to pro')
+            .setTextButtonStyle(CardService.TextButtonStyle.FILLED)
+            .setOnClickAction(
+                CardService.newAction()
+                .setFunctionName('openLinkUpdatePro')
+                .setParameters({updatePro_url: updatePro_url})));
 
         var section_intro = CardService.newCardSection()
         .addWidget(
             CardService.newTextParagraph()
-            .setText('<b class="db_title">Your design with DesignBold</b>')
+            .setText('<b>'+userInfo.response.user.username+'</b><br>---------------------')
             )
         .addWidget(buttonSet);
 

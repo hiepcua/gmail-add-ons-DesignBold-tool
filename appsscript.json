@@ -20,6 +20,7 @@
     "urlFetchWhitelist": [
         "https://designbold.com/",
         "https://api.designbold.com/v3/document",
+        "https://api.designbold.com/v3/user/me",
         "https://beta.designbold.com/v3/authentication",
         "https://accounts-beta.designbold.com/v2/oauth/token",
         "https://www.designbold.com/design/view",
@@ -34,7 +35,7 @@
         "name": "DesignBold Design Tool",
         "logoUrl": "https://i.ibb.co/RzcQ1HK/icon-128.png",
         "primaryColor": "#18b8a5",
-        "secondaryColor": "#4285F4",
+        "secondaryColor": "#18b8a5",
         "authorizationCheckFunction": "get3PAuthorizationUrls",
         "contextualTriggers": [{
             "unconditional": {},

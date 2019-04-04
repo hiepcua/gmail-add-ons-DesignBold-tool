@@ -22,6 +22,15 @@ function openLinkEditDesign(e){
     return actionResponse.build();
 }
 
+function openLinkUpdatePro(e){
+    var actionResponse = CardService.newActionResponseBuilder()
+    .setOpenLink(CardService.newOpenLink()
+        .setUrl(e.parameters.updatePro_url)
+        .setOpenAs(CardService.OpenAs.FULL_SIZE)
+        .setOnClose(CardService.OnClose.NOTHING));
+    return actionResponse.build();
+}
+
 function getCurrentPage(){
     var userProperties = PropertiesService.getUserProperties();
     return userProperties.getProperty('currentPage');
@@ -195,6 +204,16 @@ function db_api_render(accessToken, params, successRender){
         userProperties.setProperties({renderStatus: 3});
         console.log(result);
     })
+}
+
+/* Get info user */
+function db_api_get_info_user(accessToken){
+    var url = "https://api.designbold.com/v3/user/me?";
+    var headers_opt = {
+        "Authorization": "Bearer " + accessToken
+    }
+
+    return accessProtectedResource(url, "GET", headers_opt);
 }
 
 /*------------------------------------------------------------------------------------------------*/
