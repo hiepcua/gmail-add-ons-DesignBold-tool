@@ -163,7 +163,7 @@ function db_api_download_info(accessToken, params){
 
 /* Check image if free or not */
 function db_api_checkout(accessToken, params){
-    var url = "https://api.designbold.com/v3/document/"+params.id+"/checkout?type=png&pages=all&version="+params.version;
+    var url = "https://api.designbold.com/v3/document/"+params.id+"/checkout?type=png&pages=picked&version="+params.version+"&picked=1";
     var headers_opt = {
         "Authorization": "Bearer " + accessToken
     }
@@ -201,9 +201,37 @@ function db_api_render(accessToken, params, successRender){
         }
     }, function(result){
         /* Set render status = 3. Render thành công nhưng có lỗi */
+        var userProperties = PropertiesService.getUserProperties();
         userProperties.setProperties({renderStatus: 3});
         console.log(result);
     })
+}
+
+function buildPreviousAndRootButtonSet() {
+    var previousButton = CardService.newTextButton()
+    .setText('Back')
+    .setOnClickAction(CardService.newAction()
+        .setFunctionName('gotoPreviousCard'));
+
+    return CardService.newButtonSet()
+    .addButton(previousButton);
+}
+
+function gotoPreviousCard() {
+    var nav = CardService.newNavigation().popCard();
+    return CardService.newActionResponseBuilder()
+    .setNavigation(nav)
+    .build();
+}
+
+/* payout */
+function db_api_payout(accessToken, id){
+    var url = "https://api.designbold.com/v3/document/"+id+"/payout";
+    var headers_opt = {
+        "Authorization": "Bearer " + accessToken
+    }
+
+    return accessProtectedResource(url, "PATCH", headers_opt);
 }
 
 /* Get info user */

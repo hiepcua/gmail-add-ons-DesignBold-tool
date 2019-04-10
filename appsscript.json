@@ -44,11 +44,13 @@
         "openLinkUrlPrefixes": [
             "https://designbold.com/",
             "https://api.designbold.com/v3/document",
+            "https://www.designbold.com/pricing",
             "https://beta.designbold.com/v3/authentication",
             "https://accounts-beta.designbold.com/v2/oauth/token",
             "https://www.designbold.com/design/view",
             "https://www.designbold.com/design/edit",
-            "https://www.googleapis.com/upload/gmail/v1/users/me/drafts"
+            "https://www.googleapis.com/upload/gmail/v1/users/me/drafts",
+            "https://cloud.designbold.com/crop/"
         ],
         "composeTrigger": {
             "selectActions": [{
