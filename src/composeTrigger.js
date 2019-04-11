@@ -113,8 +113,8 @@ function checkoutComposeNavigation(e) {
     }
 
     if(parseInt(checkout_info.response.total) == 0){
-        var htmlTemplate = '<font color="#18b8a5">Free image</font><br>-------------------';
-        var button = CardService.newTextButton().setText('Use image')
+        var htmlTemplate = '<font color="#18b8a5">Document is free to download</font><br>-------------------';
+        var button = CardService.newTextButton().setText('Save to Google Drive')
         .setOnClickAction(CardService.newAction()
             .setFunctionName('insertImgToCurrentComposeBeingOpen')
             .setParameters({
@@ -147,7 +147,7 @@ function checkoutComposeNavigation(e) {
                 .setOpenAs(CardService.OpenAs.FULL_SIZE)
                 .setOnClose(CardService.OnClose.NOTHING));
         }else{
-            var button = CardService.newTextButton().setText('Use image')
+            var button = CardService.newTextButton().setText('Save to Google Drive')
                 .setOnClickAction(CardService.newAction()
                     .setFunctionName('insertImgToCurrentComposeBeingOpen')
                     .setParameters({

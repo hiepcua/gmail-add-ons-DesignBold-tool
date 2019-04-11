@@ -110,8 +110,8 @@ function checkoutNavigation(e){
     }
 
     if(parseInt(checkout_info.response.total) == 0){
-        var htmlTemplate = '<font color="#18b8a5">Free image</font><br>-------------------<br>'+media_html;
-        var button = CardService.newTextButton().setText('Use image')
+        var htmlTemplate = '<font color="#18b8a5">Document is free to download</font><br>-------------------<br>'+media_html;
+        var button = CardService.newTextButton().setText('Save to Google Drive')
         .setComposeAction(CardService.newAction()
             .setFunctionName('insertImgToNewCompose')
             .setParameters({
@@ -146,7 +146,7 @@ function checkoutNavigation(e){
                 .setOpenAs(CardService.OpenAs.FULL_SIZE)
                 .setOnClose(CardService.OnClose.NOTHING));
         }else{
-            var button = CardService.newTextButton().setText('Use image')
+            var button = CardService.newTextButton().setText('Save to Google Drive')
             .setComposeAction(CardService.newAction()
                 .setFunctionName('insertImgToNewCompose')
                 .setParameters({url : params.url, id : params.id, version : params.version, payout : '1'}),
