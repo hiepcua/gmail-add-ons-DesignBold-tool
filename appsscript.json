@@ -1,5 +1,5 @@
 {
-    "timeZone": "Pacific/Pago_Pago",
+    "timeZone": "Asia/Ho_Chi_Minh",
     "dependencies": {
         "libraries": [{
             "userSymbol": "OAuth2",
