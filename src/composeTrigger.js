@@ -63,31 +63,44 @@ function getListImage2(){
     var cardSection = CardService.newCardSection();
     var i=0;
 
-    for (var item in list) {
-        var imageUrl = list[item].thumb;
-        var imageId = list[item]._id;
-        var edit_link = list[item].edit_link;
-        var version = list[item].version;
+    if(Object.keys(list).length > 0){
+        for (var item in list) {
+            var imageUrl = list[item].thumb;
+            var imageId = list[item]._id;
+            var edit_link = list[item].edit_link;
+            var version = list[item].version;
 
-        if(imageUrl === '') imageUrl = 'https://cdn.designbold.com/web/dbcream/main/images/empty_design.jpg';
+            if(imageUrl === '') imageUrl = 'https://cdn.designbold.com/web/dbcream/main/images/empty_design.jpg';
+            cardSection
+            .addWidget(
+                CardService.newImage().setImageUrl(imageUrl)
+                )
+            .addWidget(
+                CardService.newButtonSet()
+                .addButton(CardService.newTextButton().setText('Check out')
+                    .setOnClickAction(
+                        CardService.newAction()
+                        .setFunctionName('checkoutComposeNavigation')
+                        .setParameters({url : imageUrl, id : imageId, version : version})))
+
+                .addButton(CardService.newTextButton().setText('Edit image')
+                    .setOnClickAction(
+                        CardService.newAction()
+                        .setFunctionName('openLinkEditDesign')
+                        .setParameters({design_url: edit_link})
+                        )));
+        }
+    }else{
         cardSection
         .addWidget(
-            CardService.newImage().setImageUrl(imageUrl)
-            )
-        .addWidget(
-            CardService.newButtonSet()
-            .addButton(CardService.newTextButton().setText('Check out')
-                .setOnClickAction(
-                    CardService.newAction()
-                    .setFunctionName('checkoutComposeNavigation')
-                    .setParameters({url : imageUrl, id : imageId, version : version})))
+            CardService.newTextParagraph()
+            .setText("You don't have any design yet."))
 
-            .addButton(CardService.newTextButton().setText('Edit image')
-                .setOnClickAction(
-                    CardService.newAction()
-                    .setFunctionName('openLinkEditDesign')
-                    .setParameters({design_url: edit_link})
-                    )));
+        .addWidget(CardService.newTextButton().setText("Design with DesignBold")
+            .setOpenLink(CardService.newOpenLink()
+                .setUrl('https://www.designbold.com/collection/create-new')
+                .setOpenAs(CardService.OpenAs.FULL_SIZE)
+                .setOnClose(CardService.OnClose.NOTHING)))
     }
 
     return cardSection;
@@ -103,7 +116,7 @@ function checkoutComposeNavigation(e) {
     var checkout_info = JSON.parse(db_api_checkout(accessToken, params));
 
     var medias = checkout_info.response.medias;
-    var media_html = '';
+    var media_html = '<br>List items: <br>';
     for(var item in medias){
         media_html += 'Title : <font color="#18b8a5"><a href="' + medias[item].thumb + '"><b>'+medias[item].title+'</b></a><br></font>';
         if(parseInt(medias[item].price) !== 0){
@@ -137,7 +150,9 @@ function checkoutComposeNavigation(e) {
         .build();
     }else{
         var accountUser = JSON.parse(db_api_get_info_user(accessToken));
-        var total_budget = parseInt(accountUser.response.account.budget);
+        var your_budget = parseInt(accountUser.response.account.budget);
+        var your_budget_bonus = parseInt(accountUser.response.account.budget_bonus);
+        var total_budget = your_budget + your_budget_bonus;
         var estimate = parseInt(checkout_info.response.total);
 
         if(total_budget < estimate){
@@ -148,19 +163,35 @@ function checkoutComposeNavigation(e) {
                 .setOnClose(CardService.OnClose.NOTHING));
         }else{
             var button = CardService.newTextButton().setText('Save to Google Drive')
-                .setOnClickAction(CardService.newAction()
-                    .setFunctionName('insertImgToCurrentComposeBeingOpen')
-                    .setParameters({
-                        url : params.url, 
-                        id : params.id, 
-                        version : params.version, 
-                        payout : '1'}));
+            .setOnClickAction(CardService.newAction()
+                .setFunctionName('insertImgToCurrentComposeBeingOpen')
+                .setParameters({
+                    url : params.url, 
+                    id : params.id, 
+                    version : params.version, 
+                    payout : '1'}));
         }
-    
-        var htmlTemplate = '<font color="#18b8a5"><b>Photo Premium </b></font><br>'
-        + 'Pay: <b><font color="#18b8a5">' + checkout_info.response.total +'</font></b> Coin<br>'
-        + 'Total budget : <b><font color="#18b8a5">' + total_budget + '</font></b> Coin<br>_____________________'
-        + '<br>' + media_html;
+
+        var htmlTemplate = '<font color="#18b8a5"><b>Photo Premium </b></font><br>';
+        if(estimate > 1){
+            htmlTemplate += 'Pay: <b><font color="#18b8a5">' + estimate +'</font></b> Coins<br>';
+        }else{
+            htmlTemplate += 'Pay: <b><font color="#18b8a5">' + estimate +'</font></b> Coin <br>';
+        }
+
+        if(your_budget > 1){
+            htmlTemplate += 'Budget: <b><font color="#18b8a5">' + your_budget +'</font></b> Coins<br>';
+        }else if(your_budget == 1){
+            htmlTemplate += 'Budget: <b><font color="#18b8a5">' + your_budget +'</font></b> Coin <br>';
+        }
+
+        if(your_budget_bonus > 1){
+            htmlTemplate += 'Budget bonus: <b><font color="#18b8a5">' + your_budget_bonus +'</font></b> Coins<br>';
+        }else if(your_budget_bonus == 1){
+            htmlTemplate += 'Budget bonus: <b><font color="#18b8a5">' + your_budget_bonus +'</font></b> Coin <br>';
+        }
+
+        htmlTemplate += media_html;
 
         var card = CardService.newCardBuilder()
         .setHeader(CardService.newCardHeader().setTitle("Design infomation"))

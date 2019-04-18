@@ -63,11 +63,10 @@ function saveDriver(url){
     var day = currentTime.getDate();
 
     // If folder not exists then create folder DesignBold
-    if(!checkFolderExists('DesignBold')){
-        var folder = DriveApp.createFolder('DesignBold');
-        folder.setSharing(DriveApp.Access.ANYONE, DriveApp.Permission.EDIT);
+    if(!checkFolderExists('DesignBold Design Add-on')){
+        var folder = DriveApp.createFolder('DesignBold Design Add-on');
         
-        var par_id = getFolderIdByName(0, 'DesignBold');
+        var par_id = getFolderIdByName(0, 'DesignBold Design Add-on');
         var f_year_id = createFolder(par_id, year); 
         var f_month_id = createFolder(f_year_id, month);
 
@@ -76,7 +75,7 @@ function saveDriver(url){
 
         return 'https://drive.google.com/uc?id='+urlImg;
     }else{
-        var par_id = getFolderIdByName(0, 'DesignBold');
+        var par_id = getFolderIdByName(0, 'DesignBold Design Add-on');
         var f_year_id = createFolder(par_id, year);
         var f_month_id = createFolder(f_year_id, month);
 
@@ -147,6 +146,7 @@ function createFolder(folderId, folderName){
 function db_createFile(folderId, fileData){
     var folder = DriveApp.getFolderById(folderId);
     var newFile = folder.createFile(fileData);
+    newFile.setSharing(DriveApp.Access.ANYONE, DriveApp.Permission.EDIT);
     return newFile.getId();
 }
 
@@ -163,7 +163,7 @@ function db_api_download_info(accessToken, params){
 
 /* Check image if free or not */
 function db_api_checkout(accessToken, params){
-    var url = "https://api.designbold.com/v3/document/"+params.id+"/checkout?type=png&pages=picked&version="+params.version+"&picked=1";
+    var url = "https://api.designbold.com/v3/document/"+params.id+"/checkout?type=png&pages=picked&version="+params.version+"&picked=[1]";
     var headers_opt = {
         "Authorization": "Bearer " + accessToken
     }
@@ -293,8 +293,8 @@ function accessProtectedResource(url, method_opt, headers_opt, successCallback, 
 
 function getOAuthService() {
     return OAuth2.createService('DESIGNBOLD_LOGIN')
-    .setAuthorizationBaseUrl('https://beta.designbold.com/v3/authentication')
-    .setTokenUrl('https://accounts-beta.designbold.com/v2/oauth/token')
+    .setAuthorizationBaseUrl('https://www.designbold.com/v3/authentication')
+    .setTokenUrl('https://accounts.designbold.com/v2/oauth/token')
     .setClientId('QMvWpekgLW7KGywVmrl29ABap1QEb9o4qY6PJjDzZn0eR53NOXxvMoXmVg0n@designbold-apps')
     .setClientSecret('G63RlwG1kwqAXgDdPmQe25p3O6NZyQ5yxl4vKrRaM0LJzY7bBojEnW15dJpv@designbold-apps')
     .setCallbackFunction('authCallback')
@@ -330,14 +330,14 @@ function create3PAuthorizationUi() {
         .setAuthorizationUrl(authUrl));
 
     var promptText =
-    'To show you information from your 3P account that is relevant' +
+    'To show you information from your DesignBold account that is relevant' +
     ' to the recipients of the email, this add-on needs authorization';
 
     var card = CardService.newCardBuilder()
     .setHeader(CardService.newCardHeader()
         .setTitle('Authorization Required'))
     .addSection(CardService.newCardSection()
-        .setHeader('This add-on needs access to your 3P account.')
+        .setHeader('This add-on needs access to your DesignBold account.')
         .addWidget(CardService.newTextParagraph()
             .setText(promptText))
         .addWidget(CardService.newButtonSet()
