@@ -55,7 +55,8 @@
             "https://www.designbold.com/design/view",
             "https://www.designbold.com/design/edit",
             "https://www.googleapis.com/upload/gmail/v1/users/me/drafts",
-            "https://cloud.designbold.com/crop/"
+            "https://cloud.designbold.com/crop/",
+            "https://us.123rf.com/450wm"
         ],
         "composeTrigger": {
             "selectActions": [{
