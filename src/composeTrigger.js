@@ -81,7 +81,7 @@ function getListImage2(){
                     .setOnClickAction(
                         CardService.newAction()
                         .setFunctionName('checkoutNavigation')
-                        .setParameters({url : imageUrl, id : imageId, version : version})))
+                        .setParameters({url : imageUrl, id : imageId, version : version, isCompose : '1'})))
 
                 .addButton(CardService.newTextButton().setText('Edit design')
                     .setOnClickAction(
@@ -111,4 +111,14 @@ function handleLoadMoreClick2(e){
     currentPage = parseInt(currentPage) + 1;
     setCurrentPage(currentPage);
     return buildImageComposeCard(e);
+}
+
+function insertImgToCurrentComposeBeingOpen(e) {
+    var designUrl = e.parameters.designUrl;
+    var response = CardService.newUpdateDraftActionResponseBuilder()
+    .setUpdateDraftBodyAction(CardService.newUpdateDraftBodyAction()
+        .addUpdateContent("<img src='" + designUrl + "'>", CardService.ContentType.MUTABLE_HTML)
+        .setUpdateType(CardService.UpdateDraftBodyType.IN_PLACE_INSERT));
+    
+    return response.build();
 }

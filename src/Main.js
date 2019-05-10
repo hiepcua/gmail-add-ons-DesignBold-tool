@@ -386,15 +386,16 @@ function checkoutNavigation(e){
     var checkout_info = JSON.parse(db_api_checkout(accessToken, e.parameters.id, e.parameters.version));
     var _medias = checkout_info.response.medias;
     var _total = checkout_info.response.total;
+    var isCompose = e.parameters.isCompose.toString();
 
     if(parseInt(_total) == 0){
-        return layout_free(e.parameters.id, e.parameters.version, _medias, _total, accessToken);
+        return layout_free(e.parameters.id, e.parameters.version, _medias, _total, accessToken, isCompose);
     }else{
-        return layout_premium(e.parameters.id, e.parameters.version, _medias, _total, accessToken);
+        return layout_premium(e.parameters.id, e.parameters.version, _medias, _total, accessToken, isCompose);
     }
 }
 
-function layout_free(_id, _version, _medias, _total, _accessToken){
+function layout_free(_id, _version, _medias, _total, _accessToken, isCompose){
     // List media used by design
     if(_medias.length > 0) var media_html = '<br>List items: <br>';
     else var media_html = '';
@@ -422,6 +423,7 @@ function layout_free(_id, _version, _medias, _total, _accessToken){
                 id : _id,
                 version : _version,
                 accessToken : _accessToken,
+                isCompose: isCompose.toString(),
             }));
     }else if(renderStatus == 1){
         var pk = getPkParameterByDocumentId(_id);
@@ -434,16 +436,18 @@ function layout_free(_id, _version, _medias, _total, _accessToken){
                 pk : pk,
                 version : _version.toString(),
                 accessToken : _accessToken,
+                isCompose: isCompose.toString(),
             }));
     }else if(renderStatus == 2){
-        var _downloadUrl = getDownloadUrlByDocumentId(_id);
+        var downloadUrl = getDownloadUrlByDocumentId(_id);
         notify = '<b>Render successfully !</b><br>---------------------';
         btn_status = CardService.newTextButton().setText('Save To Google Drive')
         .setOnClickAction(
             CardService.newAction().setFunctionName('saveToGoogleDriver')
             .setParameters({
                 id : _id,
-                downloadUrl : _downloadUrl,
+                downloadUrl : downloadUrl,
+                isCompose: isCompose.toString(),
             }));
     }else if(renderStatus == 3){
         notify = '<b>Render error !</b><br>---------------------';
@@ -468,7 +472,7 @@ function layout_free(_id, _version, _medias, _total, _accessToken){
     .build();
 }
 
-function layout_premium(_id, _version, _medias, _total, _accessToken){
+function layout_premium(_id, _version, _medias, _total, _accessToken, isCompose){
     // List media used by design
     if(_medias.length > 0) var media_html = '<br>List items: <br>';
     else var media_html = '';
@@ -496,6 +500,7 @@ function layout_premium(_id, _version, _medias, _total, _accessToken){
                 id : _id,
                 version : _version,
                 accessToken : _accessToken,
+                isCompose : isCompose.toString(),
             }));
     }else if(renderStatus == 1){
         var pk = getPkParameterByDocumentId(_id);
@@ -507,17 +512,19 @@ function layout_premium(_id, _version, _medias, _total, _accessToken){
                 id : _id,
                 pk : pk,
                 version : _version,
-                accessToken : _accessToken
+                accessToken : _accessToken,
+                isCompose : isCompose.toString(),
             }));
     }else if(renderStatus == 2){
-        var _downloadUrl = getDownloadUrlByDocumentId(_id);
+        var downloadUrl = getDownloadUrlByDocumentId(_id);
         notify = '<b>Render successfully !</b><br>---------------------';
         btn_status = CardService.newTextButton().setText('Save To Google Drive')
         .setOnClickAction(
             CardService.newAction().setFunctionName('saveToGoogleDriver')
             .setParameters({
                 id : _id,
-                downloadUrl : _downloadUrl
+                downloadUrl : downloadUrl,
+                isCompose : isCompose.toString(),
             }));
     }else if(renderStatus == 3){
         notify = '<b>Render error !</b><br>---------------------';
@@ -578,7 +585,7 @@ function layout_premium(_id, _version, _medias, _total, _accessToken){
 }
 
 // Layout redered successfully, show button saveToGoogleDriver
-function layout_render_successfully(_id, _downloadUrl, _medias, _title, _notify){
+function layout_render_successfully(_id, _downloadUrl, _medias, _title, _notify, _isCompose){
     // List media used by design
     if(_medias.length > 0) var media_html = '<br>List items: <br>';
     else var media_html = '';
@@ -603,7 +610,8 @@ function layout_render_successfully(_id, _downloadUrl, _medias, _title, _notify)
                 CardService.newAction().setFunctionName('saveToGoogleDriver')
                 .setParameters({
                     id : _id,
-                    downloadUrl : _downloadUrl
+                    downloadUrl : _downloadUrl,
+                    isCompose: _isCompose.toString(),
                 }))))
     .build();
 
@@ -614,7 +622,7 @@ function layout_render_successfully(_id, _downloadUrl, _medias, _title, _notify)
 }
 
 // Layout rendering, again show button check render status.
-function layout_rendering(_id, _version, _payout, _pk, _title, _notify, _accessToken){
+function layout_rendering(_id, _version, _payout, _pk, _title, _notify, _accessToken, _isCompose){
     var checkout_info = JSON.parse(db_api_checkout(_accessToken, _id, _version));
     var _medias = checkout_info.response.medias;
     if(_medias.length > 0) var media_html = '<br>List items: <br>';
@@ -646,10 +654,35 @@ function layout_rendering(_id, _version, _payout, _pk, _title, _notify, _accessT
                     notify : _notify,
                     version : _version.toString(),
                     accessToken : _accessToken,
+                    isCompose : _isCompose.toString(),
                 }))))
     .build();
 
     var nav = CardService.newNavigation().updateCard(card);
+    return CardService.newActionResponseBuilder()
+    .setNavigation(nav)
+    .build();
+}
+
+function layout_notify_blank_design(){
+    var card = CardService.newCardBuilder()
+    .setHeader(CardService.newCardHeader().setTitle("Design infomation"))
+    .addSection(CardService.newCardSection()
+        .addWidget(CardService.newTextParagraph().setText('<font color="#18b8a5">You can not render blank design</font><br>'))
+        .addWidget(CardService.newTextButton().setText('<- Back')
+            .setOnClickAction(
+                CardService.newAction().setFunctionName('gotoRootCard'))
+            ))
+    .build();
+
+    var nav = CardService.newNavigation().updateCard(card);
+    return CardService.newActionResponseBuilder()
+    .setNavigation(nav)
+    .build();
+}
+
+function gotoRootCard() {
+    var nav = CardService.newNavigation().popToRoot();
     return CardService.newActionResponseBuilder()
     .setNavigation(nav)
     .build();
@@ -660,6 +693,7 @@ function db_api_free_render(e){
     var accessToken = e.parameters.accessToken;
     var version = e.parameters.version;
     var id = e.parameters.id;
+    var isCompose = e.parameters.isCompose.toString();
     var d = new Date();
     var n = d.getMilliseconds();
     var name = id + n;
@@ -667,16 +701,10 @@ function db_api_free_render(e){
     var headers_opt = {
         "Authorization": "Bearer " + accessToken
     }
-
-    setRenderStatus(e.parameters.id, 1);
-    var res_payout = db_api_payout(accessToken, id, version);
-    if("response" in res_payout && "purchase_id" in res_payout.response){
-        setPurchaseIdParameter(id, res_payout.response.purchase_id);
-    }
     var result = JSON.parse(accessProtectedResource(url, "GET", headers_opt));
 
-    if(result.response.pk !== ''){
-        // Set pk parameter with document id
+    if(parseInt(result) !== 403){
+        setRenderStatus(e.parameters.id, 1);
         setPurchaseIdParameter(id, 0);
         setPkParameter(e.parameters.id, result.response.pk);
 
@@ -708,7 +736,8 @@ function db_api_free_render(e){
                         pk : result.response.pk,
                         id : e.parameters.id,
                         accessToken : accessToken,
-                        version : e.parameters.version
+                        version : e.parameters.version,
+                        isCompose : isCompose,
                     }))
                 ))
         .build();
@@ -718,7 +747,7 @@ function db_api_free_render(e){
         .setNavigation(nav)
         .build();
     }else{
-        Console.log('Render error !');
+        return layout_notify_blank_design();
     }
 }
 
@@ -726,6 +755,7 @@ function db_api_free_render(e){
 function db_api_render_premium(e){
     var accessToken = e.parameters.accessToken;
     var version = e.parameters.version;
+    var isCompose = e.parameters.isCompose.toString();
     var id = e.parameters.id;
     var d = new Date();
     var n = d.getMilliseconds();
@@ -801,7 +831,8 @@ function db_api_render_premium(e){
                         pk : result.response.pk,
                         id : e.parameters.id,
                         accessToken : accessToken,
-                        version : e.parameters.version
+                        version : e.parameters.version,
+                        isCompose : isCompose,
                     })))
             )
         .build();
@@ -820,6 +851,7 @@ function db_api_check_status_render_free(e){
     var id = e.parameters.id;
     var pk = e.parameters.pk;
     var version = parseInt(e.parameters.version);
+    var isCompose = e.parameters.isCompose.toString();
     var accessToken = e.parameters.accessToken;
     var d = new Date();
     var n = d.getMilliseconds();
@@ -837,11 +869,11 @@ function db_api_check_status_render_free(e){
         var downloadUrl = result.response.downloadUrl;
         setDownloadUrl(id, downloadUrl);
         setRenderStatus(id, 2);
-        return layout_render_successfully(id, downloadUrl, medias, 'Design is free to download', 'The design is ready for download.');
+        return layout_render_successfully(id, downloadUrl, medias, 'Design is free to download', 'The design is ready for download.', isCompose);
     }else{
         // Rendering. Wait a minute!
         setRenderStatus(id, 1);
-        return layout_rendering(id, version, 0, pk, 'Design is free to download', 'The design rendering... !', accessToken);
+        return layout_rendering(id, version, 0, pk, 'Design is free to download', 'The design rendering... !', accessToken, isCompose);
     }
 }
 
@@ -849,6 +881,7 @@ function db_api_check_status_render_premium(e){
     var id = e.parameters.id;
     var pk = e.parameters.pk;
     var version = parseInt(e.parameters.version);
+    var isCompose = e.parameters.isCompose.toString();
     var accessToken = e.parameters.accessToken;
     var d = new Date();
     var n = d.getMilliseconds();
@@ -866,10 +899,10 @@ function db_api_check_status_render_premium(e){
         var checkout_info = JSON.parse(db_api_checkout(accessToken, id, version));
         var medias = checkout_info.response.medias;
 
-        return layout_render_successfully(id, downloadUrl, medias, 'Design Premium', 'The design is ready for download.');
+        return layout_render_successfully(id, downloadUrl, medias, 'Design Premium', 'The design is ready for download.', isCompose);
     }else{
         setRenderStatus(id, 1);
-        return layout_rendering(id, version, 1, pk, 'Design Premium', 'The design rendering... !', accessToken);
+        return layout_rendering(id, version, 1, pk, 'Design Premium', 'The design rendering... !', accessToken, isCompose);
     }
 }
 
@@ -886,16 +919,36 @@ function db_api_payout(accessToken, id, version){
 function saveToGoogleDriver(e){
     var params = {
         "id" : e.parameters.id,
-        "downloadUrl" : e.parameters.downloadUrl
+        "downloadUrl" : e.parameters.downloadUrl,
+        "isCompose" : e.parameters.isCompose,
     };
 
+    var accessToken = getOAuthService().getAccessToken();
     var design_url = saveDriver(params.downloadUrl);
     deleteItemPropertyDownloadUrl(params.id);
     deleteItemPropertyRenderStatus(params.id);
     deleteItemPropertyPkParameter(params.id);
     deleteItemPropertyPurchaseIdParameter(params.id);
-
-    getRenderStatusByDocumentId(params.id)
+    getRenderStatusByDocumentId(params.id);
+    if(parseInt(params.isCompose) == 0){
+        var btn_insert_design = CardService.newTextButton().setText('Insert to compose')
+        .setComposeAction(CardService.newAction()
+            .setFunctionName('insertImgToNewCompose')
+            .setParameters({
+                designUrl : design_url,
+                accessToken : accessToken,
+            }),
+            CardService.ComposedEmailType.STANDALONE_DRAFT);
+    }else{
+        var btn_insert_design = CardService.newTextButton().setText('Insert to compose')
+        .setOnClickAction(
+            CardService.newAction().setFunctionName('insertImgToCurrentComposeBeingOpen')
+            .setParameters({
+                designUrl : design_url,
+                accessToken : accessToken,
+            }));
+    }
+    
 
     var card = CardService.newCardBuilder()
     .addSection(CardService.newCardSection()
@@ -903,7 +956,7 @@ function saveToGoogleDriver(e){
             .setText('<font color="#18b8a5">The design was successfully downloaded</font><br>-------------------<br>'))
         .addWidget(CardService.newTextParagraph()
             .setText('<a href="'+design_url+'" target="_blank"><b>View design in drive</b></a>'))
-        )
+        .addWidget(btn_insert_design))
     .build();
 
     var nav = CardService.newNavigation().updateCard(card);
@@ -935,6 +988,7 @@ function accessProtectedResource(url, method_opt, headers_opt) {
             return resp.getContentText("utf-8"); // Success
         } else if (code == 401 || code == 403) {
             maybeAuthorized = false;
+            return 403;
         } else {
             console.error("Backend server error (%s): %s", code.toString(),
                 resp.getContentText("utf-8"));

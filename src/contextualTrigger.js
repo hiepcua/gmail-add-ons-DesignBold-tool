@@ -76,7 +76,7 @@ function getListImage(){
                     .setOnClickAction(
                         CardService.newAction()
                         .setFunctionName('checkoutNavigation')
-                        .setParameters({url : imageUrl, id : imageId, version : version})))
+                        .setParameters({url : imageUrl, id : imageId, version : version, isCompose : '0'})))
 
                 .addButton(CardService.newTextButton().setText('Edit design')
                     .setOnClickAction(
@@ -107,3 +107,16 @@ function handleLoadMoreClick(e){
     setCurrentPage(currentPage);
     return getContextualAddOn(e);
 };
+
+function insertImgToNewCompose(e) {
+    var designUrl = e.parameters.designUrl;
+    var accessToken = e.messageMetadata.accessToken;
+    GmailApp.setCurrentMessageAccessToken(accessToken);
+
+    var draftCompose = GmailApp.createDraft("", "", "",{
+        htmlBody: "<img src='"+designUrl+"'/>"
+    });
+
+    return CardService.newComposeActionResponseBuilder()
+    .setGmailDraft(draftCompose).build();
+}
